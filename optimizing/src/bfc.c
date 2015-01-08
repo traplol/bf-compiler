@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #define MEMSIZE_sz "30000"
 #define PTR_NAME "p"
@@ -9,6 +10,12 @@
 #define fputs_tabbed(str, file) do { \
     char *__secret_scoped_string__ = tabify(str); \
     fputs(__secret_scoped_string__, file); \
+    free(__secret_scoped_string__); \
+} while(0)
+
+#define fprintf_tabbed(file, fmt, ...) do { \
+    char *__secret_scoped_string__ = tabify(fmt); \
+    fprintf(file, __secret_scoped_string__, __VA_ARGS__); \
     free(__secret_scoped_string__); \
 } while(0)
 
@@ -36,17 +43,17 @@ char *tabify(char *str) {
     return tab(indention, str);
 }
 
-void left(void) {
-    fputs_tabbed("--" PTR_NAME ";\n", OUT);
+int peek(FILE *file) {
+    int c = getc(file);
+    ungetc(c, file);
+    return c;
 }
-void right(void) {
-    fputs_tabbed("++" PTR_NAME ";\n", OUT);
+
+void ch_ptr(int num) {
+    fprintf_tabbed(OUT, PTR_NAME " += %d;\n", num);
 }
-void add(void) {
-    fputs_tabbed("++*" PTR_NAME ";\n", OUT);
-}
-void sub(void) {
-    fputs_tabbed("--*" PTR_NAME ";\n", OUT);
+void ch_cell(int num) {
+    fprintf_tabbed(OUT, "*" PTR_NAME " += %d;\n", num);
 }
 void output(void) {
     fputs_tabbed("putchar(*" PTR_NAME ");\n", OUT);
@@ -79,6 +86,27 @@ void denit(void) {
     fputs_tabbed("}\n", OUT);
 }
 
+void optimize_left_right(void) {
+    int c, i = 0;
+    while ((c = peek(IN)) != EOF) {
+        if (c != '<' && c != '>') { break; }
+        else if (c == '<') { --i; }
+        else if (c == '>') { ++i; }
+        getc(IN);
+    }
+    ch_ptr(i);
+}
+void optimize_add_sub(void) {
+    int c, i = 0;
+    while ((c = peek(IN)) != EOF) {
+        if (c != '+' && c != '-') { break; }
+        else if (c == '-') { --i; }
+        else if (c == '+') { ++i; }
+        getc(IN);
+    }
+    ch_cell(i);
+}
+
 void parse(char *filename) {
     int c;
 
@@ -88,18 +116,31 @@ void parse(char *filename) {
         exit(1);
     }
     init();
-    while ((c = getc(IN)) != EOF) {
-        switch (c) {
-            case '>': right(); break;
-            case '<': left(); break;
-            case '+': add(); break;
-            case '-': sub(); break;
-            case '.': output(); break;
-            case ',': input(); break;
-            case '[': open_bracket(); break;
-            case ']': close_bracket(); break;
-            default: break;
+    while ((c = peek(IN)) != EOF) {
+        if (c == '>' || c == '<') {
+            optimize_left_right();
+            continue;
         }
+        else if (c == '+' || c == '-') {
+            optimize_add_sub();
+            continue;
+        }
+        else if (c == '.') {
+            output();
+        }
+        else if (c == ',') {
+            input();
+        }
+        else if (c == '[') {
+            open_bracket();
+        }
+        else if (c == ']') {
+            close_bracket();
+        }
+        /* We use getc here to advance the stream, because + - < > handle
+         * the stream in their own way but , . [ ] do not.
+         */
+        getc(IN);
     }
     fclose(IN);
     IN = NULL;
