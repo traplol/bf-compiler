@@ -4,7 +4,7 @@
 
 #include "emit.h"
 
-#define MEMSIZE_sz "30000"
+#define MEMSIZE_sz "65535"
 #define PTR_NAME "p"
 #define MEM_NAME "mem"
 
