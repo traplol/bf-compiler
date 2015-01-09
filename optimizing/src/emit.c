@@ -92,11 +92,10 @@ void emitter_denit(void) {
 
 void emit_header(void) {
     fputs_tabbed("#include <stdio.h>\n", OUT);
-    fputs_tabbed("const int MEMSIZE = " MEMSIZE_sz ";\n", OUT);
-    fputs_tabbed("int main() {\n", OUT);
+    fputs_tabbed("unsigned char " MEM_NAME "[" MEMSIZE_sz "];\n", OUT);
+    fputs_tabbed("int main(void) {\n", OUT);
     indent();
-    fputs_tabbed("char " MEM_NAME "[MEMSIZE] = {0};\n", OUT);
-    fputs_tabbed("char *" PTR_NAME " = mem;\n", OUT);
+    fputs_tabbed("unsigned char *" PTR_NAME " = " MEM_NAME ";\n", OUT);
 }
 void emit_footer(void) {
     fputs_tabbed("return 0;\n", OUT);
