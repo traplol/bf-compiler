@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "pass1.h"
 #include "emit.h"
 
 FILE *IN;
@@ -92,7 +93,7 @@ int main(void) {
     struct instruction *next;
     IN = stdin;
     instructions = parse();
-    fold(instructions);
+    pass1(instructions);
 
     emitter_init(stdout);
     emit_header();
